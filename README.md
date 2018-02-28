@@ -1,7 +1,6 @@
 # Python
 
 ```sh
-pip install flask flask-jsonpify flask-sqlalchemy flask-restful
+pip install flask flask-jsonpify flask-sqlalchemy flask-restful graphviz pymongo
 conda install python-graphviz
-pip install graphviz
 ```
