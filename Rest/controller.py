@@ -23,8 +23,8 @@ class HelloWorld(Resource):
         try:
             usuario = Usuario(nome=None)
         except ResourceBussinessException as exception:
-            return self.tratarResourceBussinessException(exception)            
-    
+            return self.tratarResourceBussinessException(exception)
+            
 api.add_resource(HelloWorld, '/hello')
 
 if __name__ == '__main__':
