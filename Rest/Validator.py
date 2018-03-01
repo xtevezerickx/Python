@@ -19,7 +19,7 @@ def NotNull(attr_name, empty_allowed=True):
             return getattr(self, name)
         def setter(self, value):
             if value is None:
-                raise ValueError
+                raise ResourceBussinessException(message = "O atributo " + attr_name + " deve ser informado")
             setattr(self, name, value)
         setattr(cls, attr_name, GenericDescriptor(getter, setter))
         return cls

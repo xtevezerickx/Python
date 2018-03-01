@@ -8,26 +8,24 @@ from model import Usuario
 app = Flask(__name__)
 api = Api(app)
 
-@app.errorhandler(ResourceBussinessException)
-def resourceBussinessExceptionHandler(error):
-    response = jsonify(erro.to_dict())
-    response.status_code = erro.status_code
-    return response
-
 class HelloWorld(Resource):
+
+    def tratarResourceBussinessException(self, exception):
+        response = jsonify(exception.to_dict())
+        response.status_code = exception.status_code
+        return response
+
     def get(self):
         return jsonify({"data":"ok"})
     
     def post(self):
         nome = request.json['nome']
-        usuario = Usuario('')
-        usuario.nome = 'erick'
-        print(usuario.idade)
-        print(usuario.nome)
-
+        try:
+            usuario = Usuario(nome=None)
+        except ResourceBussinessException as exception:
+            return self.tratarResourceBussinessException(exception)            
+    
 api.add_resource(HelloWorld, '/hello')
 
-usuario = Usuario(nome='')
-
 if __name__ == '__main__':
-     app.run(port=5002)
+    app.run(port=5002)
