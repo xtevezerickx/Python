@@ -1,8 +1,5 @@
 
-# coding: utf-8
-
-# In[ ]:
-
+from error_handling import ResourceBussinessException
 class GenericDescriptor:
     def __init__(self, getter, setter):
         self.getter = getter
@@ -15,19 +12,15 @@ class GenericDescriptor:
 
     def __set__(self, instance, value):
         return self.setter(instance, value)
-
-
-# In[ ]:
-
-def NotNull(attr_name):
+def NotNull(attr_name, empty_allowed=True):
     def decorator(cls):
         name = "__" + attr_name
         def getter(self):
             return getattr(self, name)
         def setter(self, value):
-            assert value is not None, ("O atributo: " + attr_name + " Deve ser informado.")
+            if value is None:
+                raise ValueError
             setattr(self, name, value)
         setattr(cls, attr_name, GenericDescriptor(getter, setter))
         return cls
     return decorator
-
