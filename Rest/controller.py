@@ -4,9 +4,12 @@ from json import dumps
 from flask_jsonpify import jsonify
 from error_handling import ResourceBussinessException
 from model import Usuario
+from repository import UsuarioRepository
 
 app = Flask(__name__)
 api = Api(app)
+
+usuarioRepository = UsuarioRepository()
 
 class HelloWorld(Resource):
 
@@ -16,6 +19,8 @@ class HelloWorld(Resource):
         return response
 
     def get(self):
+        usuairo = Usuario(nome="erick", idade=21)
+        usuarioRepository.save(usuario)
         return jsonify({"data":"ok"})
 
     def post(self):
