@@ -1,5 +1,7 @@
 import model as model
 import canonico as canonic
+
+
 class UsuarioAssembler():
     
     def toEntity(self, resource):
@@ -10,7 +12,7 @@ class UsuarioAssembler():
     
     def toResource(self, entity):
         resource = canonic.Usuario()
-        resource.nome = entity.nome
+        resource.nome = entity._id
         resource.idade = entity.idade
         resource.dataAlteracao = entity.dataAlteracao
         return resource
@@ -18,7 +20,6 @@ class UsuarioAssembler():
     def cursorToEntity(self, cursor):
         entity = model.Usuario()
         entity._id = cursor['_id']
-        entity.nome = cursor['nome']
         entity.idade = cursor['idade']
         entity.dataAlteracao = cursor['dataAlteracao']
         return entity
@@ -27,5 +28,10 @@ class UsuarioAssembler():
         return self.toResource(self.cursorToEntity(cursor))
 
     def requestToResource(self, request):
-        resource
-        
+        resource = canonic.Usuario()
+        resource.nome =  request.json['nome']
+        resource.idade = request.json['idade']
+        return resource
+
+    def requestToEntity(self, request):
+        return self.toEntity(self.requestToResource(request))

@@ -8,11 +8,10 @@ class UsuarioService():
         self.assembler = assembler
     
     def save(self, usuario):
-        self.repository.save()
+        self.repository.save(usuario)
     
     def findById(self, id):
         cursor = self.repository.findById(id)
-        print(cursor)
         entity = self.assembler.cursorToEntity(cursor)
         entity.dataAlteracao = entity.dataAlteracao.isoformat()
         return entity

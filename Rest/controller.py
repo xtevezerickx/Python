@@ -1,3 +1,4 @@
+import datetime
 from flask import Flask, request, Response
 from flask_restful import Resource, Api
 from json import dumps
@@ -7,7 +8,6 @@ from model import Usuario
 from service import UsuarioService
 from repository import UsuarioRepository
 from assembler import UsuarioAssembler
-
 
 usuarioRepository = UsuarioRepository(_collection_name = 'usuario')
 usuarioAssembler = UsuarioAssembler()
@@ -37,12 +37,10 @@ class HelloWorld(Resource):
         return Response(response=str(json_string), content_type="application/json")
 
     def post(self):
-        nome = request.json['nome']
-        idade = request.json['idade']
         try:
-            usuario = Usuario(nome=nome)
-            usuario.idade = idade
-            usuarioRepository.save(usuario)
+            entity = usuarioAssembler.requestToEntity(request)
+            entity.dataAlteracao = datetime.datetime.now()
+            usuarioService.save(entity)
         except ResourceBussinessException as exception:
             return self.tratarResourceBussinessException(exception)
 
