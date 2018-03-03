@@ -9,3 +9,11 @@ class ResourceBussinessException(Exception):
         rv = dict(self.payload or ())
         rv['message'] = self.message
         return rv
+
+class ResourceConflictException(Exception):
+    def __init__(self, message = "Conflict"):
+        super(ResourceConflictException, self).__init__(message)
+
+class ResourceNotFoundException(Exception):
+    def __init__(self, message = "Conflict"):
+        super(ResourceNotFoundException, self).__init__(message)
