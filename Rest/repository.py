@@ -23,3 +23,8 @@ class UsuarioRepository(CrudRepository):
     
     def __init__(self, _collection_name):
         super().__init__(collection_name = _collection_name)
+
+class OAuth2AcessTokenRepository(CrudRepository):
+
+    def __init__(self, _collection_name):
+        super().__init__(collection_name = _collection_name)

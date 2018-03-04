@@ -17,3 +17,7 @@ class ResourceConflictException(Exception):
 class ResourceNotFoundException(Exception):
     def __init__(self, message = "Conflict"):
         super(ResourceNotFoundException, self).__init__(message)
+
+class UsernameNotFoundException(Exception):
+    def __init__(self, message = "Usuário ou senha inválidos"):
+        super(UsernameNotFoundException, self).__init__(message)
