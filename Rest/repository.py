@@ -1,7 +1,7 @@
 import pymongo
-
-client = pymongo.MongoClient(host="localhost", port=27017)
-db = client.python
+import config
+client = pymongo.MongoClient(host=config.MONGO_HOST, port=config.MONGO_PORT)
+db = client[config.MONGO_DATABASE]
 
 class CrudRepository():
     def __init__(self, collection_name):
