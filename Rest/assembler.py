@@ -2,49 +2,45 @@ import model as model
 import canonico as canonic
 
 
-class UsuarioAssembler():
-    
-    def toEntity(self, resource):
+class UsuarioAssembler:
+
+    def to_entity(self, resource):
         entity = model.Usuario()
         entity._id = resource.nome
-        entity.idade = resource.idade
         entity.password = resource.password
         return entity
-    
-    def toResource(self, entity):
+
+    def to_resource(self, entity):
         resource = canonic.Usuario()
         resource.nome = entity._id
-        resource.idade = entity.idade
-        resource.dataAlteracao = entity.dataAlteracao
+        resource.data_alteracao = entity.data_alteracao
         return resource
 
-    def cursorToEntity(self, cursor):
+    def cursor_to_entity(self, cursor):
         entity = model.Usuario()
         entity._id = cursor['_id']
-        entity.idade = cursor['idade']
-        entity.dataAlteracao = cursor['dataAlteracao']
+        entity.data_alteracao = cursor['data_alteracao']
         entity.password = cursor['password']
         return entity
-    
-    def cursorToResource(self, cursor):
-        return self.toResource(self.cursorToEntity(cursor))
 
-    def requestToResource(self, request):
+    def cursor_to_resource(self, cursor):
+        return self.to_resource(self.cursor_to_entity(cursor))
+
+    def request_to_resource(self, request):
         resource = canonic.Usuario()
-        resource.nome =  request.json['nome']
-        resource.idade = request.json['idade']
+        resource.nome = request.json['nome']
         resource.password = request.json['password']
         return resource
 
-    def requestToEntity(self, request):
-        return self.toEntity(self.requestToResource(request))
+    def request_to_entity(self, request):
+        return self.to_entity(self.request_to_resource(request))
 
 
-class OAuth2AccessTokenAssembler():
+class OAuth2AccessTokenAssembler:
 
-    def cursorToEntity(self, cursor):
+    def cursor_to_entity(self, cursor):
         entity = model.OAuth2AccessToken()
         entity._id = cursor['_id']
-        entity.usuario = UsuarioAssembler().cursorToEntity(cursor['usuario'])
-        entity.dataExpiracao = cursor['dataExpiracao']
+        entity.usuario = UsuarioAssembler().cursor_to_entity(cursor['usuario'])
+        entity.dataExpiracao = cursor['data_expiracao']
         return entity

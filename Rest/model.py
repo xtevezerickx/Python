@@ -1,14 +1,20 @@
-class Usuario():
-    
-    def __init__(self, _id = None, idade = None, dataAlteracao = None, password = None):
-        self._id = _id
-        self.idade = idade
-        self.dataAlteracao = dataAlteracao
-        self.password = password
+class Usuario:
 
-class OAuth2AccessToken():
+    def __init__(self, **kwargs):
+        params = {}
+        for i in kwargs:
+            params[i.lower()] = kwargs[i]
 
-    def __init__(self, accessToken = None, usuario = None, dataExpiracao = None):
-        self._id = accessToken
+        self._id = params.get('_id', None)
+        self.data_alteracao = params.get('data_alteracao', None)
+        self.data_criacao = params.get('data_criacao', None)
+        self.password = params.get('password', None)
+        self.nome = params.get('nome', None)
+
+
+class OAuth2AccessToken:
+
+    def __init__(self, access_token=None, usuario=None, data_expiracao=None):
+        self._id = access_token
         self.usuario = usuario
-        self.dataExpiracao = dataExpiracao
+        self.data_expiracao = data_expiracao
