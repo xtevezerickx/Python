@@ -12,7 +12,3 @@ conda install python-graphviz
 jupyter nbconvert --to script CustomValidator.ipynb
 ```
 
-[ ] Validações de model (`POST`) Validar email  \
-[ ] Serviço recuperar senha (Enviar email) \
-[ ] Template para email de recuperar senha \
-
