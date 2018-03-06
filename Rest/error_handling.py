@@ -15,13 +15,16 @@ class ResourceBussinessException(Exception):
 class ResourceConflictException(Exception):
     def __init__(self, message="Conflict"):
         super(ResourceConflictException, self).__init__(message)
+        self.message = message
 
 
 class ResourceNotFoundException(Exception):
-    def __init__(self, message="Conflict"):
+    def __init__(self, message="Not Found"):
         super(ResourceNotFoundException, self).__init__(message)
+        self.message = message
 
 
 class UsernameNotFoundException(Exception):
     def __init__(self, message="Usuário ou senha inválidos"):
         super(UsernameNotFoundException, self).__init__(message)
+        self.message = message

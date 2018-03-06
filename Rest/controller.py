@@ -1,9 +1,10 @@
 import datetime
+import threading
 from flask import Flask, request, Response
 from flask_restful import Api
 from json import dumps
 from flask_jsonpify import jsonify
-from error_handling import ResourceBussinessException, ResourceNotFoundException, ResourceConflictException, \
+from error_handling import ResourceBussinessException, ResourceNotFoundException, ResourceConflictException,\
     UsernameNotFoundException
 from service import UsuarioService, OAuth2Service
 from repository import UsuarioRepository, OAuth2AcessTokenRepository
@@ -31,14 +32,17 @@ def logado(func):
     def inner(*args, **kwargs):
         authorization = request.headers.get('Authorization')
         if authorization is None:
-            return Response(status=401)
+            json_string = dumps({'message': 'Você deve estar logado para acessar este recurso'}, ensure_ascii=False)
+            return Response(status=401, response=json_string, content_type="application/json")
         else:
             try:
                 token = oauth2_service.find_access_token(authorization)
                 if token is None or datetime.datetime.now() >= token.dataExpiracao:
-                    return Response(status=401)
+                    json_string = dumps({'message': 'Sessão expirada'}, ensure_ascii=False)
+                    return Response(status=401, response=json_string, content_type="application/json")
             except ResourceNotFoundException:
-                return Response(status=401)
+                json_string = dumps({'message': 'Token não encontrado'}, ensure_ascii=False)
+                return Response(status=401, response=json_string, content_type="application/json")
             return func(*args, **kwargs)
 
     return inner
@@ -49,21 +53,75 @@ def tratar_resource_bussiness_exception(exception):
     response.status_code = exception.status_code
     return response
 
-
 @app.route('/usuarios', methods=['POST'])
 def salvar_usuario():
     try:
         entity = usuario_assembler.request_to_entity(request)
-        entity.dataAlteracao = datetime.datetime.now()
         usuario_service.save(entity)
         return Response(status=201, content_type="application/json")
     except ResourceBussinessException as exception:
         return tratar_resource_bussiness_exception(exception)
-    except ResourceConflictException:
-        return Response(status=409)
+    except ResourceConflictException as e:
+        json_string = dumps(e.__dict__, ensure_ascii=False)
+        return Response(status=409, response=str(json_string), content_type='application/json')
 
 
-@app.route('/usuarios/<usuario_id>', methods=['GET'])
+@app.route('/usuarios/self', methods=['GET'])
+@logado
+def buscar_usuario_self():
+    usuario = get_usuario_autenticado()
+    return buscar_usuario(usuario._id)
+
+
+@app.route('/usuarios/self', methods=['PUT'])
+@logado
+def alterar_usuario_self():
+    try:
+        usuario = get_usuario_autenticado()
+        entity_enviada = usuario_assembler.request_to_entity(request)
+        entity_enviada._id = usuario._id
+        usuario_service.update(entity_enviada)
+        return Response(status=204, content_type="application/json")
+    except ResourceNotFoundException as e:
+        json_string = dumps(e.__dict__, ensure_ascii=False)
+        return Response(status=404, response=json_string, content_type="application/json")
+    except ResourceConflictException as e:
+        json_string = dumps(e.__dict__, ensure_ascii=False)
+        return Response(status=409, response=json_string, content_type="application/json")
+
+
+@app.route('/usuarios/self', methods=['DELETE'])
+@logado
+def deletar_usuario_self():
+    usuario = get_usuario_autenticado()
+    return deletar_usuario(usuario._id)
+
+
+@app.route('/matches', methods=['POST'])
+def salvar_match():
+    usuario = get_usuario_autenticado()
+    destin = usuario_service.find_by_id(request.json['id'])
+    clasificacao = request.json['classificacao']
+    threading.Thread(target=salvar_match_async, args=(usuario, destin, clasificacao)).start()
+    return Response(status=200)
+
+def salvar_match_async(usuario, destin, classficacao):
+    raise ResourceNotFoundException()
+
+
+@app.route('/oauth/token', methods=['POST'])
+def get_access_token():
+    try:
+        username = request.args.get("username")
+        password = request.args.get("password")
+        access_token, data_expiracao = oauth2_service.get_access_token(Usuario(email=username, password=password))
+        retorno = OAuth2AccessToken(access_token=access_token, data_expiracao=data_expiracao.isoformat()[:-3])
+        return Response(status=200, response=str(dumps(retorno.__dict__)), content_type="application/json")
+    except UsernameNotFoundException:
+        return Response(status=400, content_type="application/json")
+    except ResourceNotFoundException:
+        return Response(status=400, content_type="application/json")
+
 def buscar_usuario(usuario_id):
     try:
         entity = usuario_service.find_by_id(usuario_id)
@@ -74,37 +132,13 @@ def buscar_usuario(usuario_id):
         return Response(status=404)
 
 
-@app.route('/usuarios/self', methods=['GET'])
-@logado
-def buscar_usuario_self():
-    authorization = request.headers.get('Authorization')
-    usuario = oauth2_service.find_access_token(authorization).usuario
-    return buscar_usuario(usuario._id)
-
-
-@app.route('/usuarios/<usuario_id>', methods=['PUT'])
-def alterar_usuario(usuario_id):
-    return Response()
-
-
-@app.route('/usuarios/<usuario_id>', methods=['DELETE'])
 def deletar_usuario(usuario_id):
     usuario_service.delete(usuario_id)
     return Response()
 
 
-@app.route('/oauth/token', methods=['POST'])
-def get_access_token():
-    try:
-        username = request.args.get("username")
-        password = request.args.get("password")
-        access_token = oauth2_service.get_access_token(Usuario(_id=username, password=password))
-        retorno = OAuth2AccessToken(access_token=access_token)
-        return Response(status=200, response=str(dumps(retorno.__dict__)), content_type="application/json")
-    except UsernameNotFoundException:
-        return Response(status=400)
-    except ResourceNotFoundException:
-        return Response(status=400)
-
+def get_usuario_autenticado():
+    authorization = request.headers.get('Authorization')
+    return oauth2_service.find_access_token(authorization).usuario
 
 app.run(port=5002)

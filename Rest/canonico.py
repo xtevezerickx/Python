@@ -12,5 +12,6 @@ class Usuario:
 
 
 class OAuth2AccessToken:
-    def __init__(self, access_token=None):
+    def __init__(self, access_token=None, data_expiracao=None):
         self.access_token = access_token
+        self.data_expiracao = data_expiracao
