@@ -6,3 +6,4 @@ SMTP_PORT = 587
 SMTP_USERNAME = 'validuser'
 SMTP_PASSWORD = 'validpassword'
 TOKEN_VALIDATE_MINUTES = 60
+GOOGLE_MAPS_KEY = 'validkey'
