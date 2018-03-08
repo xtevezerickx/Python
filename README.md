@@ -12,7 +12,7 @@ conda install python-graphviz
 jupyter nbconvert --to script CustomValidator.ipynb
 ```
 
-#Boas praticas
+#Boas práticas
 ```
 https://gist.github.com/sloria/7001839
 ```
