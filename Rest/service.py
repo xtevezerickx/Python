@@ -2,8 +2,11 @@ from error_handling import ResourceNotFoundException, ResourceConflictException,
 from passlib.hash import pbkdf2_sha256
 from model import OAuth2AccessToken
 from datetime import datetime, timedelta
-import config
 import uuid
+import config
+import requests
+
+_BASE_GOOGLE_MAPS_URL = 'https://maps.googleapis.com/maps/api/geocode/json'
 
 class UsuarioService:
 
@@ -17,6 +20,7 @@ class UsuarioService:
         usuario.data_alteracao = data
         usuario.data_criacao = data
         usuario.password = pbkdf2_sha256.hash(usuario.password)
+        usuario.endereco = usuario.endereco.__dict__
         cursor = self.repository.find_by_filter({'email': usuario.email})
         documents = []
         for i in cursor:
@@ -67,7 +71,9 @@ class OAuth2Service:
             raise UsernameNotFoundException()
         access_token = str(uuid.uuid4())
         data_expiracao = datetime.now() + timedelta(minutes=config.TOKEN_VALIDATE_MINUTES)
-        oauth2_acces_token = OAuth2AccessToken(access_token=access_token, usuario=usuario_banco.__dict__,
+        usuario_save = usuario_banco.__dict__
+        usuario_save['endereco'] = usuario_save['endereco'].__dict__
+        oauth2_acces_token = OAuth2AccessToken(access_token=access_token, usuario=usuario_save,
                                                data_expiracao=data_expiracao)
         self.repository.save(oauth2_acces_token)
         return access_token, data_expiracao
@@ -77,3 +83,20 @@ class OAuth2Service:
         if cursor is None:
             raise ResourceNotFoundException()
         return self.oauth2_assembler.cursor_to_entity(cursor)
+
+
+class GoogleMapsService:
+
+    def get_lat_lng_from_address(self, address):
+        params = {
+            "address": address,
+            "key": config.GOOGLE_MAPS_KEY
+        }
+
+        result = requests.get(_BASE_GOOGLE_MAPS_URL, params=params, verify=False)
+        json = result.json()
+
+        if json['status'] == 'OK':
+            lat = json['results'][0]['geometry']['location']['lat']
+            lng = json['results'][0]['geometry']['location']['lng']
+            return lat, lng

@@ -6,22 +6,26 @@ from json import dumps
 from flask_jsonpify import jsonify
 from error_handling import ResourceBussinessException, ResourceNotFoundException, ResourceConflictException,\
     UsernameNotFoundException
-from service import UsuarioService, OAuth2Service
+from service import UsuarioService, OAuth2Service, GoogleMapsService
 from repository import UsuarioRepository, OAuth2AcessTokenRepository
-from assembler import UsuarioAssembler, OAuth2AccessTokenAssembler
+from assembler import UsuarioAssembler, OAuth2AccessTokenAssembler, EnderecoAssembler
 from functools import wraps
 from model import Usuario
 from canonico import OAuth2AccessToken
 
+endereco_assembler = EnderecoAssembler()
+
 usuario_repository = UsuarioRepository(_collection_name='usuario')
-usuario_assembler = UsuarioAssembler()
+usuario_assembler = UsuarioAssembler(endereco_assembler=endereco_assembler)
 usuario_service = UsuarioService(repository=usuario_repository, assembler=usuario_assembler)
 
 oauth2_repository = OAuth2AcessTokenRepository(_collection_name='oAuth2AccessToken')
-oauth2_assembler = OAuth2AccessTokenAssembler()
+oauth2_assembler = OAuth2AccessTokenAssembler(usuario_assembler = usuario_assembler)
 oauth2_service = OAuth2Service(repository=oauth2_repository,
                                usuario_service=usuario_service,
                                oauth2_assembler=oauth2_assembler)
+
+google_maps_service = GoogleMapsService()
 
 app = Flask(__name__)
 api = Api(app)
@@ -57,6 +61,10 @@ def tratar_resource_bussiness_exception(exception):
 def salvar_usuario():
     try:
         entity = usuario_assembler.request_to_entity(request)
+        address = entity.endereco.endereco + " , " + entity.endereco.cep + " , " + entity.endereco.estado
+        lat, lng = google_maps_service.get_lat_lng_from_address(address)
+        entity.endereco.latitude = lat
+        entity.endereco.longitude = lng
         usuario_service.save(entity)
         return Response(status=201, content_type="application/json")
     except ResourceBussinessException as exception:
@@ -98,12 +106,13 @@ def deletar_usuario_self():
 
 
 @app.route('/matches', methods=['POST'])
+@logado
 def salvar_match():
     usuario = get_usuario_autenticado()
     destin = usuario_service.find_by_id(request.json['id'])
     clasificacao = request.json['classificacao']
     threading.Thread(target=salvar_match_async, args=(usuario, destin, clasificacao)).start()
-    return Response(status=200)
+    return Response(status=202)
 
 def salvar_match_async(usuario, destin, classficacao):
     raise ResourceNotFoundException()
@@ -122,11 +131,15 @@ def get_access_token():
     except ResourceNotFoundException:
         return Response(status=400, content_type="application/json")
 
+
 def buscar_usuario(usuario_id):
     try:
         entity = usuario_service.find_by_id(usuario_id)
         resource = usuario_assembler.to_resource(entity)
-        json_string = dumps(resource.__dict__)
+        resource.password = None
+        resposta = resource.__dict__
+        resposta['endereco'] = resposta['endereco'].__dict__
+        json_string = dumps(resposta)
         return Response(response=str(json_string), content_type="application/json")
     except ResourceNotFoundException:
         return Response(status=404)
